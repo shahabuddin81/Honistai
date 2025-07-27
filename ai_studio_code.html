@@ -1,0 +1,2413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Earn Rewards</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Firebase SDK Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-analytics-compat.js"></script>
+
+    <style>
+        :root {
+            /* Muted Modern Theme Colors */
+            --primary-color: #4A90E2; /* Blue */
+            --primary-dark: #357ABD;
+            --secondary-color: #50E3C2; /* Teal */
+            --accent-color: #F5A623; /* Orange */
+            --bg-light: #F7F7F7;
+            --bg-dark: #2C3E50; /* Dark Slate Blue */
+            --card-bg-light: #FFFFFF;
+            --card-bg-dark: #34495E;
+            --text-dark: #333333;
+            --text-light: #F7F7F7;
+            --border-color-light: #E0E0E0;
+            --border-color-dark: #4A657D;
+
+            /* Sizes */
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+            --transition: all 0.3s ease-in-out;
+        }
+
+        /* Dark Mode Specific Variables */
+        body.dark-mode {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            --header-bg: linear-gradient(135deg, var(--bg-dark), #1A2530);
+            --card-bg: var(--card-bg-dark);
+            --text-primary: var(--text-light);
+            --text-secondary: #B0B0B0;
+            --border-color: var(--border-color-dark);
+            --input-bg: #4A657D;
+            --input-border: #5A7E9C;
+            --button-bg-secondary: #4A657D;
+            --button-text-secondary: var(--secondary-color);
+            --toggle-bg: #4A657D;
+        }
+
+        /* Light Mode Specific Variables */
+        body:not(.dark-mode) {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            --header-bg: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            --card-bg: var(--card-bg-light);
+            --text-primary: var(--text-dark);
+            --text-secondary: #666666;
+            --border-color: var(--border-color-light);
+            --input-bg: #F0F0F0;
+            --input-border: #E0E0E0;
+            --button-bg-secondary: #E9ECEF;
+            --button-text-secondary: var(--primary-color);
+            --toggle-bg: #E0E0E0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            transition: background-color var(--transition), color var(--transition);
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+            background-color: var(--bg-light); /* Fallback for content area */
+        }
+
+        /* Header Section */
+        .header {
+            height: 180px;
+            background: var(--header-bg);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: var(--text-light);
+            border-bottom-left-radius: var(--border-radius);
+            border-bottom-right-radius: var(--border-radius);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            z-index: 2;
+            letter-spacing: 0.5px;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--toggle-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            font-size: 1rem;
+            cursor: pointer;
+            z-index: 10;
+            transition: var(--transition);
+            border: 1px solid var(--border-color);
+        }
+
+        .theme-toggle:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+        /* Profile Section */
+        .profile-section {
+            margin-top: -50px;
+            padding: 0 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .profile-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 70px 20px 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            position: relative;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .profile-pic {
+            position: absolute;
+            top: -45px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: 3px solid var(--card-bg);
+            object-fit: cover;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            background: var(--primary-color); /* Placeholder background */
+        }
+
+        .profile-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+        }
+
+        .verified-badge {
+            color: var(--secondary-color);
+            margin-left: 5px;
+            font-size: 0.8rem;
+        }
+
+        .edit-name-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            margin-left: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: var(--transition);
+            opacity: 0.8;
+        }
+
+        .edit-name-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .points-display {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(74, 144, 226, 0.1);
+            padding: 6px 15px;
+            border-radius: 50px;
+            margin-top: 8px;
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 0.9rem;
+        }
+
+        .points-display i {
+            margin-right: 6px;
+            color: var(--primary-color);
+        }
+
+        .stats-display {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .stat-item {
+            background: var(--bg-light);
+            padding: 8px 12px;
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--border-color);
+            min-width: 70px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        body.dark-mode .stat-item {
+            background: var(--input-bg);
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+            font-size: 1rem;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            opacity: 0.8;
+            color: var(--text-secondary);
+        }
+
+        /* Content Section */
+        .content-section {
+            padding: 20px;
+            margin-bottom: 80px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 18px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .section-title i {
+            margin-right: 10px;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        /* Task Cards */
+        .task-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .task-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .task-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .task-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(74, 144, 226, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            color: var(--primary-color);
+            font-size: 1rem;
+        }
+
+        .task-title {
+            font-weight: 600;
+            flex: 1;
+            color: var(--text-primary);
+        }
+
+        .reward-badge {
+            background: rgba(245, 166, 35, 0.1);
+            color: var(--accent-color);
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .task-description {
+            color: var(--text-secondary);
+            margin-bottom: 18px;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .progress-container {
+            margin-bottom: 18px;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: var(--primary-color);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* Buttons */
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            border-radius: var(--border-radius-sm);
+            border: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(74, 144, 226, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--button-bg-secondary);
+            color: var(--button-text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+        body.dark-mode .btn-secondary:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+
+        .btn-disabled, .btn:disabled {
+            background: var(--border-color);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .btn-disabled:hover, .btn:disabled:hover {
+            transform: none;
+            box-shadow: none;
+            background: var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        /* Channel List */
+        .channel-list {
+            list-style: none;
+        }
+
+        .channel-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .channel-item:last-child {
+            border-bottom: none;
+        }
+
+        .channel-info {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+
+        .channel-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(74, 144, 226, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            color: var(--primary-color);
+            font-size: 0.9rem;
+        }
+
+        .channel-name {
+            font-weight: 500;
+            flex: 1;
+            color: var(--text-primary);
+        }
+
+        .channel-reward {
+            font-size: 0.8rem;
+            color: var(--accent-color);
+            margin-right: 12px;
+        }
+
+        .join-btn {
+            padding: 7px 14px;
+            border-radius: var(--border-radius-sm);
+            background: var(--primary-color);
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+        }
+
+        .join-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .join-btn.claimed {
+            background: var(--secondary-color);
+            cursor: default;
+            opacity: 0.9;
+        }
+
+        /* Input Groups */
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--input-border);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+        }
+
+        .select-field {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--input-border);
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 15px;
+        }
+        body.dark-mode .select-field {
+             background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        }
+
+        /* Status Messages */
+        .status-message {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            min-height: 20px;
+            padding: 8px;
+            border-radius: var(--border-radius-sm);
+        }
+
+        .success-message {
+            background: rgba(80, 227, 194, 0.1);
+            color: #50E3C2;
+            border: 1px solid #50E3C2;
+        }
+
+        .error-message {
+            background: rgba(230, 74, 74, 0.1);
+            color: #E64A4A;
+            border: 1px solid #E64A4A;
+        }
+
+        /* Referral Section */
+        .referral-container {
+            background: var(--input-bg);
+            border-radius: var(--border-radius-sm);
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px dashed var(--border-color);
+        }
+
+        .referral-input-group {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .referral-input {
+            flex: 1;
+            padding: 9px 12px;
+            border-radius: var(--border-radius-sm) 0 0 var(--border-radius-sm);
+            border: 1px solid var(--input-border);
+            background: var(--bg-light);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        body.dark-mode .referral-input {
+            background: var(--card-bg-dark);
+        }
+
+        .copy-btn {
+            padding: 0 14px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .copy-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .referral-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .stat-card {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-number {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 3px;
+        }
+
+        .stat-title {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Referred Users */
+        .referred-users {
+            margin-top: 15px;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(74, 144, 226, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            color: var(--primary-color);
+            font-size: 0.9rem;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .user-code {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 25px 0;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+            opacity: 0.7;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.08);
+            z-index: 100;
+            max-width: 480px;
+            margin: 0 auto;
+            border-top: 1px solid var(--border-color);
+            border-top-left-radius: var(--border-radius);
+            border-top-right-radius: var(--border-radius);
+        }
+        body.dark-mode .bottom-nav {
+             box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.7rem;
+            font-weight: 500;
+            flex: 1;
+            transition: var(--transition);
+        }
+
+        .nav-item i {
+            font-size: 1.3rem;
+            margin-bottom: 3px;
+            transition: var(--transition);
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+            transform: translateY(-3px);
+        }
+
+        .nav-item.active i {
+            color: var(--primary-color);
+            transform: scale(1.08);
+        }
+        
+        /* Modal Overlay (Generic) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 380px;
+            padding: 25px;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .modal-overlay.show .modal {
+            transform: scale(1);
+        }
+        
+        .modal-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .spinner {
+            width: 45px;
+            height: 45px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            margin: 15px auto;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .modal-status {
+            margin: 12px 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Developer Footer */
+        .developer-footer {
+            text-align: center;
+            padding: 12px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 20px;
+        }
+
+        .developer-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+
+        .toast.show {
+            opacity: 1;
+            bottom: 90px;
+        }
+        
+        /* --- MINING & PLANS STYLES --- */
+        .mining-card {
+            text-align: center;
+        }
+
+        .usd-logo-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 15px auto 20px;
+        }
+
+        .usd-logo {
+            width: 100%;
+            height: 100%;
+            animation: pulse 2s infinite ease-in-out;
+            color: var(--primary-color);
+            font-size: 80px;
+            line-height: 100px;
+        }
+
+        .usd-logo-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, rgba(74, 144, 226, 0.3) 0%, rgba(74, 144, 226, 0) 70%);
+            z-index: -1;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(0.95); }
+        }
+
+        .mining-balance-display {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .mining-balance-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .mining-timer-display {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            padding: 10px 15px;
+            margin-bottom: 20px;
+        }
+
+        .timer-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            letter-spacing: 2px;
+        }
+
+        .timer-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        .plans-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .plan-card {
+            background: var(--input-bg);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: var(--transition);
+        }
+        
+        .plan-card.active {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(74, 144, 226, 0.3);
+            transform: scale(1.03);
+        }
+
+        .plan-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .plan-reward, .plan-price {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+        .plan-reward span {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        .plan-price span {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        
+        .conversion-card {
+            background: var(--input-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+        }
+        .balance-display {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            padding: 10px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius-sm);
+        }
+        .balance-display span {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        /* --- SHOP STYLES --- */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .product-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 15px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+            font-size: 0.95rem;
+        }
+
+        .product-description {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            flex-grow: 1;
+        }
+
+        .product-price {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        /* --- NEW FEATURES STYLES (Spin Wheel, Quiz etc.) --- */
+        .bonus-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .bonus-card {
+            background: var(--input-bg);
+            padding: 20px 15px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .bonus-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary-color);
+        }
+        .bonus-card i {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        .bonus-card-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .bonus-card.claimed {
+             opacity: 0.6;
+             cursor: not-allowed;
+             border-color: var(--border-color);
+        }
+        .bonus-card.claimed .bonus-card-title{
+            text-decoration: line-through;
+        }
+
+        /* Spin Wheel */
+        .wheel-container {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 20px auto;
+        }
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                #FFC107 0deg 45deg, #FF9800 45deg 90deg,
+                #8BC34A 90deg 135deg, #4CAF50 135deg 180deg,
+                #2196F3 180deg 225deg, #03A9F4 225deg 270deg,
+                #9C27B0 270deg 315deg, #E91E63 315deg 360deg
+            );
+            border: 5px solid var(--card-bg);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .wheel-segment {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            top: 0;
+            left: 50%;
+            transform-origin: 0% 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+        }
+        .wheel-pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 25px solid var(--accent-color);
+            z-index: 10;
+        }
+        
+        /* Quiz Styles */
+        .quiz-container { padding: 10px; }
+        .quiz-question { font-size: 1.1rem; font-weight: 500; margin-bottom: 20px;}
+        .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+        .quiz-option {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .quiz-option:hover { background-color: var(--border-color); }
+        .quiz-option.correct { background-color: #50E3C2; color: white; border-color: #50E3C2; }
+        .quiz-option.wrong { background-color: #E64A4A; color: white; border-color: #E64A4A; }
+        .quiz-progress { text-align: center; color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;}
+
+
+        /* Responsive Adjustments */
+        @media (max-width: 480px) {
+            .profile-card {
+                padding: 70px 15px 15px;
+            }
+            .content-section {
+                padding: 15px;
+            }
+            .task-card {
+                padding: 15px;
+            }
+            .header-title {
+                font-size: 1.5rem;
+            }
+            .plans-container, .product-grid, .bonus-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-sun"></i>
+            </button>
+            <h1 class="header-title">EARN REWARDS</h1>
+        </div>
+
+        <div class="profile-section">
+            <div class="profile-card">
+                <img src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png" alt="Profile" class="profile-pic" id="profilePic">
+                <h1 class="profile-name" id="profileNameDisplay">
+                    Loading...
+                    <i class="fas fa-check-circle verified-badge"></i>
+                    <button class="edit-name-btn" id="editNameBtn">
+                        <i class="fas fa-pencil-alt"></i>
+                    </button>
+                </h1>
+                <div class="points-display" id="userPointsDisplay">
+                    <i class="fas fa-coins"></i> 0 HAI Coin
+                </div>
+                <div class="stats-display">
+                    <div class="stat-item">
+                        <div class="stat-value" id="adsWatchedToday">0</div>
+                        <div class="stat-label">Today</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="adsLeftToday">50</div>
+                        <div class="stat-label">Left</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalAdsWatched">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section" id="mainContent">
+            <!-- Content is rendered here by JavaScript -->
+        </div>
+
+        <div class="bottom-nav">
+            <a href="#" class="nav-item active" data-page="home">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a href="#" class="nav-item" data-page="tasks">
+                <i class="fas fa-tasks"></i>
+                <span>Tasks</span>
+            </a>
+             <a href="#" class="nav-item" data-page="shop">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Shop</span>
+            </a>
+            <a href="#" class="nav-item" data-page="bonus">
+                <i class="fas fa-gift"></i>
+                <span>Bonus</span>
+            </a>
+             <a href="#" class="nav-item" data-page="games">
+                <i class="fas fa-gamepad"></i>
+                <span>Games</span>
+            </a>
+            <a href="#" class="nav-item" data-page="referral">
+                <i class="fas fa-share-alt"></i>
+                <span>Referral</span>
+            </a>
+        </div>
+
+        <!-- Generic Modal -->
+        <div class="modal-overlay" id="genericModalOverlay">
+            <div class="modal" id="genericModal">
+                 <button class="modal-close-btn" id="genericModalCloseBtn"><i class="fas fa-times"></i></button>
+                 <div id="genericModalContent"></div>
+            </div>
+        </div>
+
+        <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+        // --- START OF FIREBASE CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyB_fHcRaMJvxKTozijstmfQNm3iyrLxCiY",
+            authDomain: "honistai.firebaseapp.com",
+            projectId: "honistai",
+            storageBucket: "honistai.firebasestorage.app",
+            messagingSenderId: "1079170782449",
+            appId: "1:1079170782449:web:c6f51c12a1ceb2c31e8550",
+            measurementId: "G-1M85P3YSMN",
+            databaseURL: "https://honistai-default-rtdb.asia-southeast1.firebasedatabase.app"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const analytics = firebase.analytics();
+        // --- END OF FIREBASE CONFIGURATION ---
+
+
+        // Configuration
+        const APP_NAME = "Earn Rewards";
+        const ADS_PER_DAY_LIMIT = 50;
+        const HAI_COIN_PER_AD = 100;
+        const MIN_WITHDRAW_USD = 1.0;
+        const REFERRAL_BONUS_REFERRER = 500;
+        const REFERRAL_BONUS_REFEREE = 200;
+        const MINING_INTERVAL_MS = 3 * 3600 * 1000; // 3 hours
+        const HAI_CONVERSION_RATE = { hai: 10000, usd: 0.05 };
+        const DAILY_CHECKIN_BONUS = 75;
+        const DAILY_SPINS_LIMIT = 2;
+
+        const PLANS = {
+            free:   { id: 'free', name: 'Free', price: 0, reward: 500, icon: 'fa-rocket' },
+            basic:  { id: 'basic', name: 'Basic', price: 0.05, reward: 700, icon: 'fa-star' },
+            plus:   { id: 'plus', name: 'Plus', price: 0.99, reward: 1000, icon: 'fa-gem' },
+            pro:    { id: 'pro', name: 'Pro', price: 5.99, reward: 5000, icon: 'fa-crown' },
+            max:    { id: 'max', name: 'Max', price: 9.99, reward: 10000, icon: 'fa-bolt' }
+        };
+
+        const SHOP_PRODUCTS = [
+            { id: 'prod1', name: 'Premium Watch', description: 'A stylish and elegant watch for every occasion.', image: 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8d2F0Y2h8ZW58MHx8MHx8fDA%3D', points: 150 },
+            { id: 'prod2', name: 'Wireless Headphones', description: 'High-quality sound and comfort.', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8aGVhZHBob25lc3xlbnwwfHwwfHx8MA%3D%3D', points: 120 },
+            { id: 'prod3', name: 'Modern Backpack', description: 'Durable and spacious for daily use.', image: 'https://images.unsplash.com/photo-1553062407-98eeb68c6a62?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8YmFja3BhY2t8ZW58MHx8MHx8fDA%3D', points: 200 },
+            { id: 'prod4', name: 'Leather Wallet', description: 'A classic wallet with a modern touch.', image: 'https://images.unsplash.com/photo-1613043839044-2a96759a224a?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8d2FsbGV0fGVufDB8fDB8fHww', points: 80 }
+        ];
+
+        const TELEGRAM_BOT_TOKEN = "7435209771:AAHAgcF3zACL7Z6_ygb0DQhEZeHvau90_Sk";
+        const TELEGRAM_CHAT_ID = "-1002815140582";
+        const DEVELOPER_TELEGRAM_PROFILE_LINK = "https://t.me/tbpycofficial";
+        const DEVELOPER_WEBSITE_LINK = "https://rb.gy/tfo3yi";
+        const OFFICIAL_CHANNEL_LINK = "https://t.me/your_official_channel";
+        const SUPPORT_GROUP_LINK = "https://t.me/your_support_group";
+        const REFERRAL_BOT_LINK = "https://t.me/your_referral_bot";
+        
+        const BONUS_CHANNELS = [
+            { id: 'tg_official_channel', name: 'Official Channel', link: OFFICIAL_CHANNEL_LINK, reward: 75, icon: 'fab fa-telegram-plane' },
+            { id: 'tg_support_group', name: 'Support Group', link: SUPPORT_GROUP_LINK, reward: 60, icon: 'fas fa-headset' },
+            { id: 'tg_community', name: 'Telegram Community', link: "https://t.me/tbpycofficial", reward: 50, icon: 'fab fa-telegram' },
+            { id: 'wa_community', name: 'WhatsApp Community', link: "https://rb.gy/tfo3yi", reward: 40, icon: 'fab fa-whatsapp' }
+        ];
+        
+        // --- NEW FEATURES DEMO DATA ---
+        const MICROTASKS = [
+            { id: 'fb_like', name: 'Like Facebook Page', link: 'https://facebook.com', reward: 30, icon: 'fab fa-facebook' },
+            { id: 'yt_subscribe', name: 'Subscribe on YouTube', link: 'https://youtube.com', reward: 45, icon: 'fab fa-youtube' }
+        ];
+        const DEMO_QUIZ_QUESTIONS = [
+            { question: "What is the capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], answer: "Paris", reward: 20 },
+            { question: "Which planet is known as the Red Planet?", options: ["Earth", "Mars", "Jupiter", "Venus"], answer: "Mars", reward: 20 },
+            { question: "What is the largest mammal in the world?", options: ["Elephant", "Blue Whale", "Giraffe", "Great White Shark"], answer: "Blue Whale", reward: 20 }
+        ];
+        const PROMO_CODES = {
+            "WELCOME100": { reward: 100, usesLeft: 9999 },
+            "BETA500": { reward: 500, usesLeft: 100 }
+        };
+        const SPIN_WHEEL_OPTIONS = [50, 100, 20, 200, 0, 500, 10, 150]; // 8 segments
+
+
+        // DOM Elements
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const profileNameDisplay = document.getElementById('profileNameDisplay');
+        const profilePic = document.getElementById('profilePic');
+        const editNameBtn = document.getElementById('editNameBtn');
+        const userPointsDisplay = document.getElementById('userPointsDisplay');
+        const adsWatchedTodayEl = document.getElementById('adsWatchedToday');
+        const adsLeftTodayEl = document.getElementById('adsLeftToday');
+        const totalAdsWatchedEl = document.getElementById('totalAdsWatched');
+        const mainContent = document.getElementById('mainContent');
+        const bottomNavItems = document.querySelectorAll('.bottom-nav .nav-item');
+        const genericModalOverlay = document.getElementById('genericModalOverlay');
+        const genericModalContent = document.getElementById('genericModalContent');
+        const genericModalCloseBtn = document.getElementById('genericModalCloseBtn');
+        const toast = document.getElementById('toast');
+        
+        let miningCountdownInterval;
+
+        // Current user state (will be populated from Firebase)
+        let currentUser = {};
+
+        // Show toast notification
+        function showToast(message, duration = 3000) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
+        
+        // Show/Hide Generic Modal
+        function showModal(htmlContent) {
+            genericModalContent.innerHTML = htmlContent;
+            genericModalOverlay.classList.add('show');
+        }
+        function hideModal() {
+            genericModalOverlay.classList.remove('show');
+            genericModalContent.innerHTML = ''; // Clear content
+        }
+
+
+        // Generate a referral code
+        function generateReferralCode() {
+            return Math.random().toString(36).substring(2, 10).toUpperCase();
+        }
+
+        // Load user state from Firebase
+        async function initializeUser() {
+            if (!(window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe.user)) {
+                mainContent.innerHTML = `<div class="task-card" style="text-align: center;"><h2>Error</h2><p>Could not verify user. Please open this app through Telegram.</p></div>`;
+                return;
+            }
+
+            const tgUser = Telegram.WebApp.initDataUnsafe.user;
+            const userId = tgUser.id;
+            const userRef = database.ref('users/' + userId);
+
+            const snapshot = await userRef.once('value');
+            
+            // --- UPDATED DEFAULT USER with new feature fields ---
+            const defaultUser = {
+                name: `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || `User ${userId}`,
+                telegramId: userId,
+                photoUrl: tgUser.photo_url || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png',
+                haiCoin: 0,
+                usdBalance: 0,
+                lastUsdClaimTime: null,
+                activePlanId: 'free',
+                adsWatchedToday: 0,
+                totalAdsWatchedLifetime: 0,
+                lastAdWatchDate: null,
+                claimedBonuses: [], // For channel joins
+                completedMicrotasks: [], // For microtasks
+                referralCode: generateReferralCode(),
+                referredBy: null,
+                referredUsers: [],
+                lastCheckinDate: null, // For daily checkin
+                lastSpinDate: null, // For spin wheel
+                spinsUsedToday: 0,
+                lastQuizDate: null, // For quiz
+                usedPromoCodes: [] // For promo codes
+            };
+
+            if (snapshot.exists()) {
+                currentUser = { ...defaultUser, ...snapshot.val() };
+            } else {
+                currentUser = defaultUser;
+                const urlParams = new URLSearchParams(window.location.search);
+                const refCodeFromUrl = urlParams.get('start') || urlParams.get('ref');
+
+                if (refCodeFromUrl) {
+                    await applyReferral(refCodeFromUrl);
+                }
+                
+                await saveUserState();
+            }
+            
+            // Reset daily limits
+            const today = new Date().toLocaleDateString();
+            if(currentUser.lastAdWatchDate !== today) currentUser.adsWatchedToday = 0;
+            if(currentUser.lastSpinDate !== today) currentUser.spinsUsedToday = 0;
+            if(currentUser.lastQuizDate !== today) currentUser.lastQuizDate = null;
+
+
+            if (currentUser.photoUrl) {
+                profilePic.src = currentUser.photoUrl;
+            }
+            
+            updateUI();
+            navigateTo('home');
+            checkForDailyCheckin(); // Check for bonus after initialization
+        }
+
+        // Save user state to Firebase
+        async function saveUserState() {
+            if (!currentUser.telegramId) {
+                console.error("Cannot save user state: Missing Telegram ID.");
+                return;
+            }
+            const userRef = database.ref('users/' + currentUser.telegramId);
+            await userRef.set(currentUser);
+
+            // Also update the referral code index for quick lookups
+            const referralCodeRef = database.ref('referralCodes/' + currentUser.referralCode);
+            await referralCodeRef.set(currentUser.telegramId);
+        }
+
+        // Apply referral code (Firebase version)
+        async function applyReferral(referrerCode) {
+            if (referrerCode === currentUser.referralCode || currentUser.referredBy) {
+                return; // Can't refer yourself or be referred twice
+            }
+
+            const referrerIdRef = database.ref('referralCodes/' + referrerCode);
+            const referrerIdSnapshot = await referrerIdRef.once('value');
+
+            if (referrerIdSnapshot.exists()) {
+                const referrerId = referrerIdSnapshot.val();
+                const referrerRef = database.ref('users/' + referrerId);
+                const referrerSnapshot = await referrerRef.once('value');
+
+                if (referrerSnapshot.exists()) {
+                    let referrerUser = referrerSnapshot.val();
+
+                    // Apply bonus to the new user (referee)
+                    currentUser.haiCoin += REFERRAL_BONUS_REFEREE;
+                    currentUser.referredBy = referrerCode;
+                    
+                    // Apply bonus to the referrer
+                    referrerUser.haiCoin += REFERRAL_BONUS_REFERRER;
+                    if (!referrerUser.referredUsers) {
+                        referrerUser.referredUsers = [];
+                    }
+                    referrerUser.referredUsers.push({
+                        id: currentUser.telegramId,
+                        name: currentUser.name
+                    });
+
+                    // Update referrer's data in Firebase
+                    await referrerRef.set(referrerUser);
+
+                    showToast(`+${REFERRAL_BONUS_REFEREE} bonus for joining via referral!`);
+                    sendTelegramReferralNotification(currentUser.name, currentUser.referralCode, referrerUser.name, referrerCode);
+                } else {
+                     showToast("Invalid referral code.");
+                }
+            } else {
+                showToast("Invalid referral code.");
+            }
+        }
+
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.Telegram && Telegram.WebApp) {
+                Telegram.WebApp.expand();
+                Telegram.WebApp.enableClosingConfirmation();
+            }
+            applyTheme(localStorage.getItem('galaxyEarnTheme') || 'light');
+            initializeUser();
+            
+            themeToggleBtn.addEventListener('click', toggleTheme);
+            document.getElementById('editNameBtn').addEventListener('click', promptForNewName);
+            genericModalCloseBtn.addEventListener('click', hideModal);
+            
+            bottomNavItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const page = item.dataset.page;
+                    navigateTo(page);
+                });
+            });
+        });
+
+        // Theme management
+        function applyTheme(theme) {
+            document.body.classList.toggle('dark-mode', theme === 'dark');
+            themeToggleBtn.innerHTML = theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+            localStorage.setItem('galaxyEarnTheme', theme);
+        }
+
+        function toggleTheme() {
+            applyTheme(document.body.classList.contains('dark-mode') ? 'light' : 'dark');
+        }
+
+        // Update UI elements
+        function updateUI() {
+            if (!currentUser || !currentUser.name) return;
+
+            profileNameDisplay.innerHTML = `
+                ${currentUser.name}
+                <i class="fas fa-check-circle verified-badge"></i>
+                <button class="edit-name-btn" id="editNameBtn">
+                    <i class="fas fa-pencil-alt"></i>
+                </button>
+            `;
+            document.getElementById('editNameBtn').addEventListener('click', promptForNewName);
+
+            userPointsDisplay.innerHTML = `<i class="fas fa-coins"></i> ${currentUser.haiCoin.toLocaleString()} HAI Coin`;
+            adsWatchedTodayEl.textContent = currentUser.adsWatchedToday || 0;
+            adsLeftTodayEl.textContent = ADS_PER_DAY_LIMIT - (currentUser.adsWatchedToday || 0);
+            totalAdsWatchedEl.textContent = currentUser.totalAdsWatchedLifetime || 0;
+
+            if (currentUser.photoUrl) {
+                profilePic.src = currentUser.photoUrl;
+            }
+        }
+
+        async function promptForNewName() {
+            const newName = prompt("Enter your new name:", currentUser.name);
+            if (newName && newName.trim()) {
+                currentUser.name = newName.trim();
+                updateUI();
+                await saveUserState();
+                showToast("Name updated successfully!");
+            }
+        }
+
+        // Navigation function
+        function navigateTo(page) {
+            clearInterval(miningCountdownInterval);
+            const currentActiveNavItem = document.querySelector('.bottom-nav .nav-item.active');
+            if (currentActiveNavItem) currentActiveNavItem.classList.remove('active');
+            
+            const activeNavItem = document.querySelector(`.nav-item[data-page="${page}"]`);
+            if (activeNavItem) activeNavItem.classList.add('active');
+
+            const pageRenderers = {
+                'home': renderHomePage,
+                'tasks': renderTasksPage,
+                'shop': renderShopPage,
+                'bonus': renderBonusPage,
+                'games': renderGamesPage,
+                'referral': renderReferralPage,
+                // Internal pages (not in nav)
+                'withdraw': renderWithdrawPage,
+                'spin_wheel': renderSpinWheelGame,
+                'quiz': renderQuizGame
+            };
+
+            if (pageRenderers[page]) pageRenderers[page]();
+            updateUI();
+        }
+
+        // --- PAGE RENDERERS ---
+
+        function renderHomePage() {
+             const currentPlan = PLANS[currentUser.activePlanId || 'free'];
+            let plansHtml = Object.values(PLANS).map(plan => `
+                <div class="plan-card ${plan.id === currentUser.activePlanId ? 'active' : ''}">
+                    <div class="plan-name"><i class="fas ${plan.icon}"></i> ${plan.name}</div>
+                    <div class="plan-reward"><span>+${plan.reward.toLocaleString()}</span> USD / 3h</div>
+                    <div class="plan-price">Price: <span>${plan.price > 0 ? `$${plan.price}` : 'Free'}</span></div>
+                    <button class="btn btn-secondary" onclick="activatePlan('${plan.id}')" ${plan.id === currentUser.activePlanId ? 'disabled' : ''}>
+                        ${plan.id === currentUser.activePlanId ? 'Active' : 'Activate'}
+                    </button>
+                </div>
+            `).join('');
+
+            mainContent.innerHTML = `
+                <div class="task-card mining-card">
+                    <h2 class="section-title" style="justify-content: center;">
+                        <i class="fas fa-dollar-sign"></i> USD Mining
+                    </h2>
+                    
+                    <div class="usd-logo-container">
+                        <div class="usd-logo-bg"></div>
+                        <i class="fas fa-dollar-sign usd-logo"></i>
+                    </div>
+
+                    <div id="usdBalanceDisplay" class="mining-balance-display">${(currentUser.usdBalance || 0).toFixed(4)} USD</div>
+                    <div class="mining-balance-label">Current Balance</div>
+
+                    <div class="mining-timer-display">
+                        <div id="miningTimer" class="timer-text">--:--:--</div>
+                        <div class="timer-label">Next claim in 3 hours (Rate: ${currentPlan.reward} USD)</div>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="claimUsdBtn" disabled>
+                        <i class="fas fa-hand-holding-usd"></i> Claim USD
+                    </button>
+                </div>
+                <div class="task-card">
+                     <h2 class="section-title">
+                        <i class="fas fa-layer-group"></i> Mining Plans
+                    </h2>
+                    <div class="plans-container">${plansHtml}</div>
+                </div>
+                 <div class="task-card">
+                    <button class="btn btn-primary" onclick="navigateTo('withdraw')"><i class="fas fa-wallet"></i> Withdraw Balance</button>
+                </div>
+                <div class="developer-footer">
+                    Developed by <a href="${DEVELOPER_TELEGRAM_PROFILE_LINK}" target="_blank" class="developer-link">TBPYC</a>
+                </div>`;
+            
+            document.getElementById('claimUsdBtn').addEventListener('click', handleClaimUsd);
+            initializeUsdMining();
+        }
+
+        function renderTasksPage() {
+            const adsWatched = currentUser.adsWatchedToday || 0;
+            const adsLeft = ADS_PER_DAY_LIMIT - adsWatched;
+            const progressPercent = (adsWatched / ADS_PER_DAY_LIMIT) * 100;
+            
+            // Render Microtasks
+            let microtasksHtml = MICROTASKS.map(task => {
+                const isCompleted = (currentUser.completedMicrotasks || []).includes(task.id);
+                return `
+                    <li class="channel-item">
+                        <div class="channel-info">
+                            <div class="channel-icon"><i class="${task.icon}"></i></div>
+                            <div>
+                                <div class="channel-name">${task.name}</div>
+                                <div class="channel-reward">+${task.reward} HAI Coin</div>
+                            </div>
+                        </div>
+                        <a href="${task.link}" target="_blank" class="join-btn ${isCompleted ? 'claimed' : ''}" onclick="handleMicrotaskClick(event, this, '${task.id}', ${task.reward})">
+                            ${isCompleted ? 'Done' : 'Do Task'}
+                        </a>
+                    </li>`;
+            }).join('');
+            
+            mainContent.innerHTML = `
+                <div class="task-card">
+                    <div class="task-header">
+                        <div class="task-icon"><i class="fas fa-ad"></i></div>
+                        <div class="task-title">Watch Ads</div>
+                        <div class="reward-badge">+${HAI_COIN_PER_AD}</div>
+                    </div>
+                    <p class="task-description">
+                        Watch short video ads to earn HAI Coin. You can watch up to ${ADS_PER_DAY_LIMIT} ads per day.
+                    </p>
+                    <div class="progress-container">
+                        <div class="progress-text">
+                            <span>${adsWatched}/${ADS_PER_DAY_LIMIT} watched</span>
+                            <span>${adsLeft} left</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: ${progressPercent}%"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="watchDailyAdBtn" ${adsLeft <= 0 ? 'disabled' : ''}>
+                        <i class="fas fa-play"></i> Watch Ad & Earn ${HAI_COIN_PER_AD} HAI Coin
+                    </button>
+                </div>
+                
+                <div class="task-card">
+                    <h2 class="section-title"><i class="fas fa-check-double"></i> Microtasks</h2>
+                    <p class="task-description">Complete simple tasks to earn extra coins.</p>
+                    <ul class="channel-list">${microtasksHtml}</ul>
+                </div>
+
+                <div class="developer-footer">
+                    Developed by <a href="${DEVELOPER_TELEGRAM_PROFILE_LINK}" target="_blank" class="developer-link">TBPYC</a>
+                </div>`;
+            if (adsLeft > 0) {
+                document.getElementById('watchDailyAdBtn').addEventListener('click', handleWatchDailyAd);
+            }
+        }
+        
+        function renderShopPage() {
+            let productsHtml = SHOP_PRODUCTS.map(product => `
+                <div class="product-card">
+                    <img src="${product.image}" alt="${product.name}" class="product-image">
+                    <div class="product-info">
+                        <h3 class="product-name">${product.name}</h3>
+                        <p class="product-description">${product.description}</p>
+                        <p class="product-price">Earn: ${product.points} Points</p>
+                        <button class="btn btn-secondary" onclick="handlePurchase('${product.id}')">Buy Now</button>
+                    </div>
+                </div>
+            `).join('');
+
+            mainContent.innerHTML = `
+                <h2 class="section-title"><i class="fas fa-store"></i> Shop & Earn</h2>
+                <div class="product-grid">
+                    ${productsHtml}
+                </div>
+                <div class="developer-footer">
+                    Developed by <a href="${DEVELOPER_TELEGRAM_PROFILE_LINK}" target="_blank" class="developer-link">TBPYC</a>
+                </div>
+            `;
+        }
+
+        function renderBonusPage() {
+            const today = new Date().toLocaleDateString();
+            const isCheckinClaimed = currentUser.lastCheckinDate === today;
+
+            let channelsHtml = BONUS_CHANNELS.map(channel => {
+                const isClaimed = (currentUser.claimedBonuses || []).includes(channel.id);
+                return `
+                    <li class="channel-item">
+                        <div class="channel-info">
+                            <div class="channel-icon"><i class="${channel.icon}"></i></div>
+                            <div>
+                                <div class="channel-name">${channel.name}</div>
+                                <div class="channel-reward">+${channel.reward} HAI Coin</div>
+                            </div>
+                        </div>
+                        <a href="${channel.link}" target="_blank" class="join-btn ${isClaimed ? 'claimed' : ''}" data-channel-id="${channel.id}" data-reward="${channel.reward}" onclick="handleBonusLinkClick(event, this)">
+                            ${isClaimed ? 'Claimed' : 'Join'}
+                        </a>
+                    </li>`;
+            }).join('');
+
+            mainContent.innerHTML = `
+                <div class="task-card">
+                    <h2 class="section-title"><i class="fas fa-gift"></i> Daily Bonuses</h2>
+                     <div 
+                        class="bonus-card ${isCheckinClaimed ? 'claimed' : ''}" 
+                        onclick="${isCheckinClaimed ? '' : 'handleDailyCheckinClaim()'}">
+                        <i class="fas fa-calendar-check"></i>
+                        <div class="bonus-card-title">Daily Check-in</div>
+                    </div>
+                </div>
+
+                <div class="task-card">
+                     <h2 class="section-title"><i class="fas fa-ticket-alt"></i> Promo Code</h2>
+                     <p class="task-description">Have a promo code? Enter it here to claim your reward!</p>
+                     <div class="input-group" style="display:flex; gap: 8px;">
+                        <input type="text" id="promoCodeInput" class="input-field" placeholder="Enter code">
+                        <button class="btn btn-primary" style="width: auto; padding: 0 20px;" onclick="handlePromoCode()">Claim</button>
+                     </div>
+                </div>
+                
+                <div class="task-card">
+                    <h2 class="section-title"><i class="fas fa-users"></i> Community Rewards</h2>
+                    <p class="task-description">Join our community channels to earn bonus HAI Coin.</p>
+                    <ul class="channel-list">${channelsHtml}</ul>
+                </div>
+                
+                <div class="developer-footer">
+                    Developed by <a href="${DEVELOPER_TELEGRAM_PROFILE_LINK}" target="_blank" class="developer-link">TBPYC</a>
+                </div>`;
+        }
+        
+        function renderGamesPage() {
+            const today = new Date().toLocaleDateString();
+            const quizDone = currentUser.lastQuizDate === today;
+            const spinsLeft = DAILY_SPINS_LIMIT - currentUser.spinsUsedToday;
+
+             mainContent.innerHTML = `
+                <h2 class="section-title"><i class="fas fa-gamepad"></i> Play & Earn</h2>
+                <div class="bonus-grid">
+                    <div class="bonus-card" onclick="navigateTo('spin_wheel')">
+                        <i class="fas fa-dharmachakra"></i>
+                        <div class="bonus-card-title">Spin the Wheel</div>
+                        <p class="task-description" style="margin-bottom:0;">${spinsLeft} spins left</p>
+                    </div>
+                     <div class="bonus-card ${quizDone ? 'claimed' : ''}" onclick="${quizDone ? '' : `navigateTo('quiz')`}">
+                        <i class="fas fa-question-circle"></i>
+                        <div class="bonus-card-title">Daily Quiz</div>
+                         <p class="task-description" style="margin-bottom:0;">${quizDone ? 'Completed Today' : 'Play Now!'}</p>
+                    </div>
+                </div>
+                 <div class="developer-footer">
+                    Developed by <a href="${DEVELOPER_TELEGRAM_PROFILE_LINK}" target="_blank" class="developer-link">TBPYC</a>
+                </div>
+            `;
+        }
+
+        function renderWithdrawPage() {
+            mainContent.innerHTML = `
+                <div class="task-card">
+                    <h2 class="section-title"><i class="fas fa-exchange-alt"></i> Convert HAI to USD</h2>
+                    <div class="conversion-card">
+                        <div class="balance-display">
+                            <div>HAI Coin: <span id="haiBalanceDisplay">${(currentUser.haiCoin || 0).toLocaleString()}</span></div>
+                            <div>USD: <span id="usdBalanceDisplayWithdraw">${(currentUser.usdBalance || 0).toFixed(4)}</span></div>
+                        </div>
+                        <p class="task-description" style="text-align:center; margin-bottom:10px;">
+                            Rate: ${HAI_CONVERSION_RATE.hai.toLocaleString()} HAI Coin = ${HAI_CONVERSION_RATE.usd} USD
+                        </p>
+                        <div class="input-group">
+                            <label class="input-label">HAI Coin to Convert</label>
+                            <input type="number" id="convertAmountInput" class="input-field" placeholder="Enter amount">
+                        </div>
+                        <button class="btn btn-secondary" id="convertHaiBtn"><i class="fas fa-sync-alt"></i> Convert Now</button>
+                    </div>
+                </div>
+
+                <div class="task-card">
+                    <h2 class="section-title"><i class="fas fa-wallet"></i> Withdraw USD</h2>
+                    <p class="task-description">Withdraw your USD balance. Minimum withdrawal is ${MIN_WITHDRAW_USD.toFixed(2)} USD.</p>
+                    <div class="input-group">
+                        <label class="input-label">Amount (USD)</label>
+                        <input type="number" id="withdrawAmountInput" class="input-field" placeholder="Enter amount">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Payment Method</label>
+                        <select id="withdrawMethodSelect" class="select-field">
+                            <option value="">Select method</option>
+                            <option>Bkash</option>
+                            <option>Nagad</option>
+                            <option>Payeer</option>
+                            <option>Binance</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Account Number/ID</label>
+                        <input type="text" id="withdrawAccountInput" class="input-field" placeholder="Enter your account details">
+                    </div>
+                    <button class="btn btn-primary" id="submitWithdrawBtn"><i class="fas fa-paper-plane"></i> Submit Request</button>
+                    <p class="status-message" id="withdrawStatusMsg"></p>
+                </div>
+                <div class="developer-footer">
+                    Developed by <a href="${DEVELOPER_TELEGRAM_PROFILE_LINK}" target="_blank" class="developer-link">TBPYC</a>
+                </div>`;
+
+            document.getElementById('convertHaiBtn').addEventListener('click', handleHaiConversion);
+            document.getElementById('submitWithdrawBtn').addEventListener('click', handleSubmitWithdrawal);
+        }
+
+        function renderReferralPage() {
+            const referralLink = `${REFERRAL_BOT_LINK}?start=${currentUser.referralCode}`;
+            const referredUsersCount = currentUser.referredUsers ? currentUser.referredUsers.length : 0;
+            const earnedFromReferrals = referredUsersCount * REFERRAL_BONUS_REFERRER;
+            let referredUsersListHtml = '';
+
+            if (referredUsersCount > 0) {
+                referredUsersListHtml = `<h3 style="margin: 20px 0 10px; font-size: 1rem; color: var(--text-secondary);">Your Referrals (${referredUsersCount})</h3><div class="referred-users">`;
+                currentUser.referredUsers.forEach(referredUser => {
+                    referredUsersListHtml += `
+                        <div class="user-item">
+                            <div class="user-avatar"><i class="fas fa-user"></i></div>
+                            <div class="user-info">
+                                <div class="user-name">${referredUser.name || `User ${referredUser.id}`}</div>
+                            </div>
+                        </div>`;
+                });
+                referredUsersListHtml += `</div>`;
+            } else {
+                referredUsersListHtml = `
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <p>No referrals yet</p>
+                        <p style="font-size: 0.85rem; margin-top: 5px;">Share your link to earn more</p>
+                    </div>`;
+            }
+
+            mainContent.innerHTML = `
+                <div class="task-card">
+                    <h2 class="section-title"><i class="fas fa-share-alt"></i> Refer & Earn</h2>
+                    <p class="task-description">Invite friends and earn ${REFERRAL_BONUS_REFERRER} HAI Coin for each successful referral. They'll get ${REFERRAL_BONUS_REFEREE} HAI Coin too!</p>
+                    <div class="referral-container">
+                        <label class="input-label">Your Referral Code</label>
+                        <div class="referral-input-group">
+                            <input type="text" id="referralCodeDisplay" class="referral-input" value="${currentUser.referralCode}" readonly>
+                            <button class="copy-btn" id="copyReferralCodeBtn">Copy</button>
+                        </div>
+                        <label class="input-label">Your Referral Link</label>
+                        <div class="referral-input-group">
+                            <input type="text" id="referralLinkDisplay" class="referral-input" value="${referralLink}" readonly>
+                            <button class="copy-btn" id="copyReferralLinkBtn">Copy</button>
+                        </div>
+                        <button class="btn btn-secondary" id="shareReferralLinkBtn" style="margin-top: 15px; width: 100%;"><i class="fas fa-share-alt"></i> Share Link</button>
+                    </div>
+                    <div class="referral-stats">
+                        <div class="stat-card">
+                            <div class="stat-number">${REFERRAL_BONUS_REFERRER}</div>
+                            <div class="stat-title">Per Referral</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${referredUsersCount}</div>
+                            <div class="stat-title">Total</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${earnedFromReferrals.toLocaleString()}</div>
+                            <div class="stat-title">Earned (HAI)</div>
+                        </div>
+                    </div>
+                    ${referredUsersListHtml}
+                </div>
+                <div class="developer-footer">
+                    Developed by <a href="${DEVELOPER_TELEGRAM_PROFILE_LINK}" target="_blank" class="developer-link">TBPYC</a>
+                </div>`;
+            document.getElementById('copyReferralCodeBtn').addEventListener('click', () => {
+                navigator.clipboard.writeText(currentUser.referralCode).then(() => showToast('Referral code copied!'));
+            });
+            document.getElementById('copyReferralLinkBtn').addEventListener('click', () => {
+                navigator.clipboard.writeText(referralLink).then(() => showToast('Referral link copied!'));
+            });
+            document.getElementById('shareReferralLinkBtn').addEventListener('click', () => {
+                if (navigator.share) {
+                    navigator.share({
+                        title: `${APP_NAME} - Earn Rewards!`,
+                        text: `Join ${APP_NAME} using my referral code ${currentUser.referralCode} and we both get bonus HAI Coin!`,
+                        url: referralLink,
+                    }).catch((error) => console.log('Error sharing', error));
+                } else {
+                    navigator.clipboard.writeText(referralLink).then(() => showToast('Link copied! Share it manually.'));
+                }
+            });
+        }
+        
+        // --- MINING & PLAN LOGIC ---
+
+        function initializeUsdMining() {
+            const claimBtn = document.getElementById('claimUsdBtn');
+            const timerEl = document.getElementById('miningTimer');
+            if (!claimBtn || !timerEl) return;
+            
+            clearInterval(miningCountdownInterval);
+
+            const lastClaimTime = currentUser.lastUsdClaimTime || 0;
+            const now = Date.now();
+            const timeSinceClaim = now - lastClaimTime;
+
+            if (timeSinceClaim >= MINING_INTERVAL_MS) {
+                timerEl.textContent = "00:00:00";
+                claimBtn.disabled = false;
+                claimBtn.innerHTML = '<i class="fas fa-hand-holding-usd"></i> Claim USD';
+            } else {
+                claimBtn.disabled = true;
+                claimBtn.innerHTML = '<i class="fas fa-clock"></i> Mining...';
+                
+                miningCountdownInterval = setInterval(() => {
+                    const now = Date.now();
+                    const remaining = MINING_INTERVAL_MS - (now - (currentUser.lastUsdClaimTime || 0));
+                    if (remaining <= 0) {
+                        clearInterval(miningCountdownInterval);
+                        timerEl.textContent = "00:00:00";
+                        claimBtn.disabled = false;
+                        claimBtn.innerHTML = '<i class="fas fa-hand-holding-usd"></i> Claim USD';
+                        return;
+                    }
+                    const hours = Math.floor((remaining / (1000 * 60 * 60)) % 24).toString().padStart(2, '0');
+                    const minutes = Math.floor((remaining / (1000 * 60)) % 60).toString().padStart(2, '0');
+                    const seconds = Math.floor((remaining / 1000) % 60).toString().padStart(2, '0');
+                    timerEl.textContent = `${hours}:${minutes}:${seconds}`;
+                }, 1000);
+            }
+        }
+        
+        async function handleClaimUsd() {
+            const lastClaimTime = currentUser.lastUsdClaimTime || 0;
+            const now = Date.now();
+            if (now - lastClaimTime < MINING_INTERVAL_MS) {
+                showToast("It's not time to claim yet!");
+                return;
+            }
+            
+            const currentPlan = PLANS[currentUser.activePlanId || 'free'];
+            const rewardAmount = currentPlan.reward;
+            
+            currentUser.usdBalance = (currentUser.usdBalance || 0) + rewardAmount;
+            currentUser.lastUsdClaimTime = now;
+            
+            await saveUserState();
+            updateUI();
+            
+            showToast(`+${rewardAmount.toLocaleString()} USD claimed!`);
+            
+            initializeUsdMining();
+        }
+
+        async function activatePlan(planId) {
+            const plan = PLANS[planId];
+            if (!plan) {
+                showToast("Invalid plan selected.");
+                return;
+            }
+            if (currentUser.activePlanId === planId) {
+                showToast("This plan is already active.");
+                return;
+            }
+            if ((currentUser.usdBalance || 0) < plan.price) {
+                showToast(`Not enough USD to buy this plan. You need $${plan.price}.`);
+                return;
+            }
+
+            currentUser.usdBalance -= plan.price;
+            currentUser.activePlanId = planId;
+            await saveUserState();
+            showToast(`Plan '${plan.name}' activated successfully!`);
+            navigateTo('home');
+        }
+
+        // --- SHOP LOGIC ---
+        async function handlePurchase(productId) {
+            const product = SHOP_PRODUCTS.find(p => p.id === productId);
+            if (product) {
+                currentUser.haiCoin = (currentUser.haiCoin || 0) + product.points;
+                await saveUserState();
+                updateUI();
+                showToast(`You earned ${product.points} points for purchasing ${product.name}!`);
+            }
+        }
+
+
+        // --- CONVERSION & WITHDRAW LOGIC ---
+
+        async function handleHaiConversion() {
+            const amountInput = document.getElementById('convertAmountInput');
+            const amountToConvert = parseInt(amountInput.value);
+
+            if (isNaN(amountToConvert) || amountToConvert <= 0) {
+                showToast("Please enter a valid amount of HAI Coin.");
+                return;
+            }
+            if (amountToConvert > (currentUser.haiCoin || 0)) {
+                showToast("You don't have enough HAI Coin to convert.");
+                return;
+            }
+            if (amountToConvert < HAI_CONVERSION_RATE.hai) {
+                showToast(`Minimum conversion is ${HAI_CONVERSION_RATE.hai.toLocaleString()} HAI Coin.`);
+                return;
+            }
+
+            const usdGained = (amountToConvert / HAI_CONVERSION_RATE.hai) * HAI_CONVERSION_RATE.usd;
+
+            currentUser.haiCoin -= amountToConvert;
+            currentUser.usdBalance = (currentUser.usdBalance || 0) + usdGained;
+            await saveUserState();
+
+            document.getElementById('haiBalanceDisplay').textContent = currentUser.haiCoin.toLocaleString();
+            document.getElementById('usdBalanceDisplayWithdraw').textContent = currentUser.usdBalance.toFixed(4);
+            amountInput.value = "";
+            updateUI();
+            
+            showToast(`${amountToConvert.toLocaleString()} HAI Coin converted to ${usdGained.toFixed(4)} USD!`);
+        }
+
+        async function handleSubmitWithdrawal() {
+            const amount = parseFloat(document.getElementById('withdrawAmountInput').value);
+            const method = document.getElementById('withdrawMethodSelect').value;
+            const account = document.getElementById('withdrawAccountInput').value.trim();
+            const statusMsg = document.getElementById('withdrawStatusMsg');
+
+            statusMsg.className = 'status-message';
+            statusMsg.textContent = '';
+
+            if (isNaN(amount) || amount <= 0) { statusMsg.textContent = "Please enter a valid USD amount."; statusMsg.classList.add('error-message'); return; }
+            if (amount < MIN_WITHDRAW_USD) { statusMsg.textContent = `Minimum withdrawal is ${MIN_WITHDRAW_USD.toFixed(2)} USD.`; statusMsg.classList.add('error-message'); return; }
+            if (amount > (currentUser.usdBalance || 0)) { statusMsg.textContent = "You don't have enough USD."; statusMsg.classList.add('error-message'); return; }
+            if (!method) { statusMsg.textContent = "Please select a payment method."; statusMsg.classList.add('error-message'); return; }
+            if (!account) { statusMsg.textContent = "Please enter your account details."; statusMsg.classList.add('error-message'); return; }
+            
+            currentUser.usdBalance -= amount;
+            await saveUserState(); // Save the new balance first
+
+            const withdrawalRequest = {
+                userId: currentUser.telegramId,
+                userName: currentUser.name,
+                amount: amount,
+                method: method,
+                account: account,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                status: 'pending'
+            };
+            const newWithdrawalRef = database.ref('withdrawals').push();
+            await newWithdrawalRef.set(withdrawalRequest);
+
+            const escapeMarkdown = (text) => text.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1');
+            const withdrawalDetails = `🔔 *New USD Withdrawal Request* 🔔\n------------------------------------\n👤 *User:* \`${escapeMarkdown(currentUser.name)}\` (ID: \`${currentUser.telegramId}\`)\n💵 *Amount:* ${amount.toFixed(4)} USD\n💳 *Method:* ${escapeMarkdown(method)}\n#️⃣ *Account:* \`${escapeMarkdown(account)}\`\n------------------------------------\n💰 Remaining USD: ${currentUser.usdBalance.toFixed(4)}\n💰 Remaining HAI: ${(currentUser.haiCoin || 0).toLocaleString()}\n------------------------------------\n⏰ *Timestamp:* ${new Date().toLocaleString('en-GB', { timeZone: 'Asia/Dhaka' })}`;
+            sendToTelegram(withdrawalDetails);
+
+            updateUI();
+            statusMsg.textContent = "Withdrawal request submitted successfully!";
+            statusMsg.classList.add('success-message');
+            document.getElementById('withdrawAmountInput').value = "";
+            document.getElementById('withdrawMethodSelect').value = "";
+            document.getElementById('withdrawAccountInput').value = "";
+            document.getElementById('usdBalanceDisplayWithdraw').textContent = currentUser.usdBalance.toFixed(4);
+        }
+
+        // --- OTHER HANDLERS ---
+        
+        let adWatchedSuccessfully = false;
+        let adRewardPending = false;
+
+        function handleWatchDailyAd() {
+            // ... (rest of the ad logic is unchanged)
+            showToast("Ad service not fully integrated. Simulating ad watch...");
+            adWatchedSuccessfully = true;
+            adRewardPending = true;
+            
+            showModal(`
+                <h3 class="modal-title">Simulating Ad...</h3>
+                <div class="spinner"></div>
+                <p class="modal-status">Ad will finish in 3 seconds (simulation).</p>
+            `);
+
+            setTimeout(() => {
+                if(adRewardPending) {
+                   const modalContentEl = document.getElementById('genericModalContent');
+                   if(modalContentEl) {
+                        modalContentEl.innerHTML = `
+                            <h3 class="modal-title">Ad Completed!</h3>
+                            <p class="modal-status">Close to claim your reward.</p>
+                             <button class="btn btn-primary" onclick="closeAdModalAndReward()">Claim ${HAI_COIN_PER_AD} Coins</button>
+                        `;
+                   }
+                }
+            }, 3000);
+        }
+
+        async function closeAdModalAndReward() {
+            hideModal();
+            if (adWatchedSuccessfully && adRewardPending) {
+                currentUser.haiCoin = (currentUser.haiCoin || 0) + HAI_COIN_PER_AD;
+                currentUser.adsWatchedToday = (currentUser.adsWatchedToday || 0) + 1;
+                currentUser.totalAdsWatchedLifetime = (currentUser.totalAdsWatchedLifetime || 0) + 1;
+                currentUser.lastAdWatchDate = new Date().toLocaleDateString();
+                updateUI();
+                await saveUserState();
+                showToast(`+${HAI_COIN_PER_AD} HAI Coin earned!`);
+            } else if (adRewardPending && !adWatchedSuccessfully) {
+                showToast("Ad not completed. No rewards awarded.");
+            }
+            adRewardPending = false;
+            adWatchedSuccessfully = false;
+        }
+
+        // Bonus channel handling
+        function handleBonusLinkClick(event, buttonElement) {
+            const channelId = buttonElement.dataset.channelId;
+            const reward = parseInt(buttonElement.dataset.reward);
+
+            if ((currentUser.claimedBonuses || []).includes(channelId)) {
+                showToast("Bonus already claimed!");
+                event.preventDefault(); return;
+            }
+
+            event.preventDefault();
+            window.open(buttonElement.href, '_blank');
+
+            buttonElement.textContent = 'Verifying...';
+            buttonElement.style.pointerEvents = 'none';
+
+            setTimeout(async () => {
+                if (!(currentUser.claimedBonuses || []).includes(channelId)) {
+                    currentUser.haiCoin += reward;
+                    if (!currentUser.claimedBonuses) currentUser.claimedBonuses = [];
+                    currentUser.claimedBonuses.push(channelId);
+                    updateUI();
+                    await saveUserState();
+                    buttonElement.textContent = 'Claimed';
+                    buttonElement.classList.add('claimed');
+                    showToast(`+${reward} bonus HAI Coin claimed!`);
+                }
+            }, 7000);
+        }
+        
+        // --- NEW FEATURES LOGIC ---
+        
+        // 1. Daily Check-in
+        function checkForDailyCheckin() {
+            const today = new Date().toLocaleDateString();
+            if (currentUser.lastCheckinDate !== today) {
+                 showModal(`
+                    <h3 class="modal-title"><i class="fas fa-calendar-check" style="color: #50E3C2;"></i> Daily Check-in Bonus</h3>
+                    <p class="modal-status" style="font-size: 1rem; margin: 20px 0;">Welcome back! Claim your daily bonus of <strong>${DAILY_CHECKIN_BONUS} HAI Coin</strong>.</p>
+                    <button class="btn btn-primary" onclick="handleDailyCheckinClaim()">Claim Now</button>
+                 `);
+            }
+        }
+        async function handleDailyCheckinClaim() {
+            const today = new Date().toLocaleDateString();
+            if (currentUser.lastCheckinDate === today) {
+                showToast("You have already claimed your daily bonus today.");
+                return;
+            }
+            currentUser.haiCoin += DAILY_CHECKIN_BONUS;
+            currentUser.lastCheckinDate = today;
+            await saveUserState();
+            updateUI();
+            hideModal();
+            showToast(`+${DAILY_CHECKIN_BONUS} HAI Coin claimed! See you tomorrow!`);
+            if(document.querySelector('.nav-item.active').dataset.page === 'bonus') {
+                renderBonusPage(); // Refresh bonus page if on it
+            }
+        }
+
+        // 2. Microtasks
+        function handleMicrotaskClick(event, buttonElement, taskId, reward) {
+            if ((currentUser.completedMicrotasks || []).includes(taskId)) {
+                showToast("You have already completed this task.");
+                event.preventDefault(); return;
+            }
+            event.preventDefault();
+            window.open(buttonElement.href, '_blank');
+            buttonElement.textContent = 'Verifying...';
+            buttonElement.style.pointerEvents = 'none';
+
+            setTimeout(async () => {
+                if (!(currentUser.completedMicrotasks || []).includes(taskId)) {
+                    currentUser.haiCoin += reward;
+                    if (!currentUser.completedMicrotasks) currentUser.completedMicrotasks = [];
+                    currentUser.completedMicrotasks.push(taskId);
+                    await saveUserState();
+                    updateUI();
+                    buttonElement.textContent = 'Done';
+                    buttonElement.classList.add('claimed');
+                    showToast(`+${reward} HAI Coin for completing the task!`);
+                }
+            }, 5000);
+        }
+
+        // 3. Promo Code
+        async function handlePromoCode() {
+            const input = document.getElementById('promoCodeInput');
+            const code = input.value.trim().toUpperCase();
+            if (!code) {
+                showToast("Please enter a promo code."); return;
+            }
+            // In a real app, you'd fetch this from Firebase, but for demo:
+            const promo = PROMO_CODES[code];
+            if (!promo) {
+                showToast("Invalid promo code."); return;
+            }
+            if ((currentUser.usedPromoCodes || []).includes(code)) {
+                showToast("You have already used this promo code."); return;
+            }
+            
+            currentUser.haiCoin += promo.reward;
+            if (!currentUser.usedPromoCodes) currentUser.usedPromoCodes = [];
+            currentUser.usedPromoCodes.push(code);
+            await saveUserState();
+            
+            updateUI();
+            input.value = '';
+            showToast(`Success! +${promo.reward} HAI Coin added from promo code.`);
+        }
+
+        // 4. Spin Wheel
+        function renderSpinWheelGame() {
+            let segmentsHtml = '';
+            const angle = 360 / SPIN_WHEEL_OPTIONS.length;
+            SPIN_WHEEL_OPTIONS.forEach((option, i) => {
+                 segmentsHtml += `<div class="wheel-segment" style="transform: rotate(${i * angle}deg) skewY(-${90-angle}deg);"><span style="transform: skewY(${90-angle}deg) rotate(${angle/2}deg);">${option}</span></div>`
+            });
+
+            const spinsLeft = DAILY_SPINS_LIMIT - currentUser.spinsUsedToday;
+            mainContent.innerHTML = `
+                <div class="task-card text-center">
+                    <h2 class="section-title" style="justify-content: center;"><i class="fas fa-dharmachakra"></i> Spin the Wheel</h2>
+                    <p class="task-description">You have <strong>${spinsLeft}</strong> spins left today. Good luck!</p>
+                    <div class="wheel-container">
+                        <div class="wheel-pointer"></div>
+                        <div class="wheel" id="spinWheel">
+                            ${segmentsHtml}
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="spinBtn" ${spinsLeft <= 0 ? 'disabled' : ''}>
+                        <i class="fas fa-play"></i> Spin Now
+                    </button>
+                </div>`;
+            document.getElementById('spinBtn').addEventListener('click', spinTheWheel);
+        }
+        
+        let isSpinning = false;
+        async function spinTheWheel() {
+            if(isSpinning) return;
+            const today = new Date().toLocaleDateString();
+            if(currentUser.lastSpinDate !== today) {
+                currentUser.spinsUsedToday = 0;
+            }
+            if(currentUser.spinsUsedToday >= DAILY_SPINS_LIMIT) {
+                showToast("No more spins left for today."); return;
+            }
+            isSpinning = true;
+            document.getElementById('spinBtn').disabled = true;
+
+            const wheel = document.getElementById('spinWheel');
+            const segmentAngle = 360 / SPIN_WHEEL_OPTIONS.length;
+            const randomSegment = Math.floor(Math.random() * SPIN_WHEEL_OPTIONS.length);
+            const reward = SPIN_WHEEL_OPTIONS[randomSegment];
+            
+            // Random extra rotation + target angle
+            const totalRotation = (360 * 5) + (randomSegment * -segmentAngle) - (segmentAngle/2);
+
+            wheel.style.transform = `rotate(${totalRotation}deg)`;
+            
+            currentUser.spinsUsedToday++;
+            currentUser.lastSpinDate = today;
+
+            setTimeout(async () => {
+                isSpinning = false;
+                showToast(`You won ${reward} HAI Coin!`);
+                if (reward > 0) {
+                    currentUser.haiCoin += reward;
+                }
+                await saveUserState();
+                updateUI();
+                navigateTo('games'); // Refresh games page to show updated spin count
+            }, 5500); // Wait for animation to finish
+        }
+
+        // 5. Quiz
+        let currentQuestionIndex = 0;
+        let quizScore = 0;
+        function renderQuizGame() {
+            currentQuestionIndex = 0;
+            quizScore = 0;
+            displayQuizQuestion();
+        }
+        function displayQuizQuestion() {
+            if (currentQuestionIndex >= DEMO_QUIZ_QUESTIONS.length) {
+                showQuizResult();
+                return;
+            }
+            const q = DEMO_QUIZ_QUESTIONS[currentQuestionIndex];
+            const optionsHtml = q.options.map(option => `
+                <div class="quiz-option" onclick="checkQuizAnswer(this, '${option}', '${q.answer}', ${q.reward})">${option}</div>
+            `).join('');
+
+            mainContent.innerHTML = `
+                 <div class="task-card">
+                    <h2 class="section-title"><i class="fas fa-question-circle"></i> Daily Quiz</h2>
+                    <div class="quiz-container">
+                        <div class="quiz-progress">Question ${currentQuestionIndex + 1} of ${DEMO_QUIZ_QUESTIONS.length}</div>
+                        <p class="quiz-question">${q.question}</p>
+                        <div class="quiz-options">${optionsHtml}</div>
+                    </div>
+                 </div>
+            `;
+        }
+        function checkQuizAnswer(element, selected, correct, reward) {
+            const options = document.querySelectorAll('.quiz-option');
+            options.forEach(opt => opt.onclick = null); // Disable further clicks
+
+            if (selected === correct) {
+                element.classList.add('correct');
+                quizScore += reward;
+                showToast(`Correct! +${reward} coins`, 1500);
+            } else {
+                element.classList.add('wrong');
+                options.forEach(opt => {
+                    if (opt.textContent === correct) opt.classList.add('correct');
+                });
+                showToast('Wrong answer!', 1500);
+            }
+            currentQuestionIndex++;
+            setTimeout(displayQuizQuestion, 2000);
+        }
+        async function showQuizResult() {
+            currentUser.haiCoin += quizScore;
+            currentUser.lastQuizDate = new Date().toLocaleDateString();
+            await saveUserState();
+            updateUI();
+
+            mainContent.innerHTML = `
+                 <div class="task-card text-center" style="text-align: center;">
+                    <h2 class="section-title" style="justify-content:center">Quiz Completed!</h2>
+                    <div class="empty-state">
+                        <i class="fas fa-trophy" style="color:var(--accent-color)"></i>
+                        <p style="font-size:1.2rem;">You earned a total of</p>
+                        <p class="stat-number" style="font-size:2rem">${quizScore} HAI Coin</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="navigateTo('games')">Back to Games</button>
+                 </div>
+            `;
+        }
+
+        // Telegram integration
+        function sendToTelegram(message) {
+            if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'MarkdownV2' })
+            }).catch(e => console.error(e));
+        }
+
+        function sendTelegramReferralNotification(refereeName, refereeCode, referrerName, referrerCode) {
+            if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+            const escapeMarkdown = (text) => text.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1');
+            const message = `🎉 *New Referral Bonus!* 🎉\n------------------------------------\n👥 *New User:* \`${escapeMarkdown(refereeName)}\` (Code: \`${escapeMarkdown(refereeCode)}\`)\n🌟 *Received:* ${REFERRAL_BONUS_REFEREE} HAI Coin\nReferral From:\n👤 *Referrer:* \`${escapeMarkdown(referrerName)}\` (Code: \`${escapeMarkdown(referrerCode)}\`)\n🌟 *Received:* ${REFERRAL_BONUS_REFERRER} HAI Coin\n------------------------------------\n⏰ *Timestamp:* ${new Date().toLocaleString('en-GB', { timeZone: 'Asia/Dhaka' })}`;
+             sendToTelegram(message);
+        }
+    </script>
+</body>
+</html>
